@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type CertCa struct {
@@ -44,6 +45,11 @@ func (c *CertCa) ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		buff.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 		buff.Flush()
 
+
+		timer2 := time.NewTimer(time.Second)
+
+		timer2.Reset(time.Second * 10)
+
 		go (func() {
 			if err != nil {
 				return
@@ -55,6 +61,12 @@ func (c *CertCa) ProxyHandler(w http.ResponseWriter, r *http.Request) {
 			tlsCon.Handshake()
 
 			for {
+
+
+
+
+
+
 				r, err := http.ReadRequest(clientTlsReader)
 				if err != nil {
 					//fmt.Println("EOF")
@@ -78,13 +90,19 @@ func (c *CertCa) ProxyHandler(w http.ResponseWriter, r *http.Request) {
 				response, err := http.DefaultTransport.RoundTrip(r)
 
 				if err != nil {
+					//break
 					continue
 				}
 				//fmt.Println(response)
 
-				EncodeResponse(response)
+				//EncodeResponse(response)
 				response.Write(clientTlsWriter)
 				clientTlsWriter.Flush()
+
+
+				if timer2.Stop() {
+					return
+				}
 			}
 		})()
 		return
